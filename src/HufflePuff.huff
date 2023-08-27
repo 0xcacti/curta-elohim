@@ -1,0 +1,59 @@
+#define constant EVA_CONFIG = 0x1752e069
+
+#define macro MAIN() = takes (0) returns (0) {
+	0x00 calldataload 0xfc shr
+
+	dup1 0x0f eq eva_eight jumpi
+	dup1 0x08 eq eva_nine jumpi
+	0x06 eq eva_ten jumpi
+
+	// eva_seven
+	0x07 // exp
+	[EVA_CONFIG] 0xe0 shl 0xf8 shr
+
+	exp 0x00 mstore
+	0x20 0x00 return
+
+	eva_eight:
+		0x08 // exp
+		[EVA_CONFIG] 0xe8 shl 0xf8 shr
+
+		exp 0x00 mstore
+		0x20 0x00 return
+
+	eva_nine:
+		0x09 // exp
+		[EVA_CONFIG] 0xf0 shl 0xf8 shr
+
+		exp 0x00 mstore
+		0x20 0x00 return
+
+	eva_ten:
+		0x00
+		eva_ten_loop:
+			gas
+			dup2 sload pop
+			gas swap1 sub
+			0xfd lt eva_ten_loop_exit jumpi
+			0x01 add
+			eva_ten_loop jump
+		eva_ten_loop_exit:
+		dup1 0x01 eq direct_sixteen jumpi
+
+		0x05 dup2 mod iszero
+		0x03 dup3 mod iszero or
+		mul iszero iszero
+		0x06 mul 0x0a add
+
+		[EVA_CONFIG] 0xf8 shl 0xf8 shr
+
+		exp 0x00 mstore
+		0x20 0x00 return
+
+	direct_sixteen:
+		0x10 // exp
+		[EVA_CONFIG] 0xf8 shl 0xf8 shr
+
+		exp 0x00 mstore
+		0x20 0x00 return
+}

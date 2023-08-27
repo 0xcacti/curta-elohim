@@ -1,0 +1,144 @@
+#define constant SEED =  0x1752e069
+
+#define function eva_SEVEN()  pure returns(uint256)
+#define function eva_EIGHT()  pure returns(uint256)
+#define function eva_NINE()  pure returns(uint256)
+#define function eva_TEN()  pure returns(uint256)
+
+#define macro EVA_SEVEN() = takes(0) returns(0) {
+    [SEED]  // [SEED]
+    0x18
+    shr
+    0x07
+    swap1
+    exp
+    0x00 mstore
+    0x20
+    0x00
+    return
+}
+
+#define macro EVA_EIGHT() = takes(0) returns(0) {
+    [SEED]  // [SEED]
+    0x10
+    shr
+    0x100
+    swap1
+    mod
+    0x08
+    swap1
+    exp
+    0x00 mstore
+    0x20
+    0x00
+    return
+}
+
+#define macro EVA_NINE() = takes(0) returns(0) {
+    [SEED]          // [SEED]
+    0x08            // [0x08 SEED]
+    shr             // [SEED >> 0x08]
+    0x100
+    swap1
+    mod
+    0x09            // [0x09, SEED >>0x08]
+    swap1           // [SEED >>0x08, 0x09]
+    exp             // [(SEED >> 0x08) ** 0x09]
+    0x00 mstore            // [0x00, value]
+    0x20
+    0x00
+    return
+
+}
+
+#define macro EVA_TEN() = takes(0) returns(0) {
+    GET_SLOT_AND_COUNT()
+    dup1
+    0x01
+    eq
+    answer_one jumpi
+    dup1
+    0x03
+    eq
+    answer_one jumpi
+    [SEED]          // [SEED]
+    0x100
+    swap1
+    mod
+    0x0a            // [0x0a, SEED & 0xff]
+    swap1           // [SEED & 0xff, 0x0a]
+    exp             // [(SEED && 0xff) ** 0x0a]
+    0x00 mstore            
+    0x20
+    0x00
+    return
+
+    answer_one:
+        [SEED]          // [SEED]
+        0x100
+        swap1
+        mod
+        0x10            // [0x0a, SEED & 0xff]
+        swap1           // [SEED & 0xff, 0x0a]
+        exp             // [(SEED && 0xff) ** 0x0a]
+        0x00 mstore            
+        0x20
+        0x00
+        return
+        
+}
+
+#define macro GET_SLOT_AND_COUNT() = takes(0) returns(1) {
+    [SEED]         // [SEED]
+    0x00           // [0x00, SEED]
+    loop:
+        dup1       // [0x00, 0x00, SEED] 
+        dup3       // [SEED, 0x00, 0x00, SEED]
+        add        // [(SEED + counter), 0x00, SEED]
+        IS_COLD()  // [isCold, 0x00, SEED]
+        end_loop jumpi
+        0x01       // [0x01, 0x00, SEED]
+        add        // [0x01, SEED]
+        loop jump
+
+    end_loop:
+        
+}
+
+
+#define macro IS_COLD() = takes(1) returns(1) {
+    // input stack:   // [slot]
+
+    gas              //  [gas1 slot]
+    swap1            //  [slot gas1]
+    sload            //  [value gas1]
+    pop              //  [gas1]
+    gas              //  [gas2 gas1]
+    swap1            //  [gas1 gas2]
+    sub              //  [( gas1 - gas2 )]
+    0x96             //  [0x96, (gas1 - gas2)] 
+    lt               //  [0x01] if (gas1 - gas2) < 0x96
+
+}
+
+
+
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xE0 shr
+    0x00 pop
+    0x00 pop
+    dup1 __FUNC_SIG(eva_SEVEN) eq sevenJump jumpi
+    dup1 __FUNC_SIG(eva_EIGHT) eq eightJump jumpi
+    dup1 __FUNC_SIG(eva_NINE) eq nineJump jumpi
+    dup1 __FUNC_SIG(eva_TEN) eq tenJump jumpi
+
+    sevenJump:
+        EVA_SEVEN()
+    eightJump:
+        EVA_EIGHT()
+    nineJump:
+        EVA_NINE()
+    tenJump:
+        EVA_TEN()
+}
